@@ -29,7 +29,7 @@ router.post('/signUp', (req, res) => {
         let queryAccounts = `CALL insert_user('${email}', '${hash}','${name}')`;
         db.query(queryAccounts, (error, result) => {
             if (error) {
-                res.sendStatus(500);
+                res.status(500).json(error);
                 return;
             }
             console.log(result);
@@ -117,13 +117,17 @@ router.post('/updateUser/:id', middleware.checkToken, (req, res) => {
     let user;
     let query = `UPDATE User SET City = '${city}' WHERE Id = ${req.params.id}`
     db.query(query, async (error, result) => {
-        if (error)
-            throw error;
+        if (error){
+            res.status(500).json(error);
+            return;
+        }
         console.log(result);
     });
     let sql = db.query(`SELECT * FROM User WHERE Id = ${req.params.id}`, (error, result) => {
-        if (error)
-            throw error;
+        if (error){
+            res.status(500).json(error);
+            return;
+        }
 
         user = result[0];
         res.status(201).json({
@@ -171,14 +175,18 @@ router.post("/updateProfilePhoto/:id", function (req, res) {
     }
 
     fs.writeFile(`./public/${userDirectory}/images/profile/${name}`, realFile, function (err) {
-        if (err)
-            console.log(err);
+        if (error){
+            res.status(500).json(error);
+            return;
+        }
     });
 
     let query = `CALL update_profile_photo(${userId},'${url}')`;
     db.query(query, (error, result) => {
-        if (error)
-            throw error;
+        if (error){
+            res.status(500).json(error);
+            return;
+        }
         console.log(url);
         res.status(200).json({
             message: 'Successfuly updated',
@@ -207,14 +215,18 @@ router.post("/updateCoverPhoto/:id", function (req, res) {
     }
 
     fs.writeFile(`./public/${userDirectory}/images/cover/${name}`, realFile, function (err) {
-        if (err)
-            console.log(err);
+        if (error){
+            res.status(500).json(error);
+            return;
+        }
     });
 
     let query = `CALL update_cover_photo(${userId},'${url}')`;
     db.query(query, (error, result) => {
-        if (error)
-            throw error;
+        if (error){
+            res.status(500).json(error);
+            return;
+        }
         console.log(url);
         res.status(200).json({
             message: 'Successfuly updated',
@@ -227,8 +239,10 @@ router.get('/getUser/:id', middleware.checkToken, (req, res) => {
     let query = `SELECT * FROM User`;
     let user;
     db.query(query, async (error, result) => {
-        if (error)
-            throw error;
+        if (error){
+            res.status(500).json(error);
+            return;
+        }
         user = result[0]
         res.status(200).json({
             success: true,

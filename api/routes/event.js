@@ -18,7 +18,7 @@ router.post('/joinEvent/:id', (req, res) => {
     let query = `CALL join_event(${req.params.id},${req.body.userId})`;
     db.query(query, (error, result) => {
         if (error) {
-            res.status(400).json(error);
+            res.status(500).json(error);
             return;
         }
         res.status(200).json({success:true,message:'You have joined the event'});
@@ -28,8 +28,8 @@ router.post('/joinEvent/:id', (req, res) => {
 router.post('/leaveEvent/:id', (req, res) => {
     let query = `CALL leave_Event(${req.params.id},${req.body.userId})`;
     db.query(query, (error, result) => {
-        if (error) {
-            res.status(400).json(error);
+        if (error){
+            res.status(500).json(error);
             return;
         }
         res.status(200).json({success:true,message:'You have left the event'});
@@ -41,8 +41,9 @@ router.get('/allEvents/:id', (req, res) => {
     let getAllQuery = `SELECT  Event.*, User.profileImage as profileImage FROM Event INNER JOIN User ON User.id = userId WHERE userId !=${req.params.id}`
     
     db.query(getAllQuery, (error, result) => {
-        if (error) {
+        if (error){
             res.status(500).json(error);
+            return;
         }
         Object.keys(result).forEach((key) => {
             let item = result[key];
@@ -71,8 +72,9 @@ router.get('/userEvents/:id', (req, res) => {
     let getAllQuery = `SELECT  Event.*, User.profileImage as profileImage FROM Event INNER JOIN User ON User.id = userId WHERE Event.userId = ${req.params.id};
     `
     db.query(getAllQuery, (error, result) => {
-        if (error) {
-            throw error;
+        if (error){
+            res.status(500).json(error);
+            return;
         }
         Object.keys(result).forEach((key) => {
             let item = result[key];
@@ -108,8 +110,9 @@ router.post('/createEvent/:id', (req, res) => {
     let event;
     let getAllQuery = `CALL create_event('${eventName}','${sport}',${lat},${long},${nrParticipants},${userId},'${dateStart}','${dateFinish}')`;
     db.query(getAllQuery, (error, result) => {
-        if (error) {
-            res.status(200).json(error);
+        if (error){
+            res.status(500).json(error);
+            return;
         }
         Object.keys(result).forEach((key) => {
             let item = result[key];
@@ -148,8 +151,9 @@ router.post('/search', (req, res) => {
          `;
             }
             db.query(getAllQuery, (error, result) => {
-                if (error) {
+                if (error){
                     res.status(500).json(error);
+                    return;
                 }
                 Object.keys(result).forEach((key) => {
                     let item = result[key];
@@ -177,8 +181,9 @@ router.post('/search', (req, res) => {
     } else {
         getAllQuery = `SELECT  Event.*, User.profileImage as profileImage FROM Event INNER JOIN User ON User.id = userId WHERE Event.eventName LIKE '%${eventName}%'`;
         db.query(getAllQuery, (error, result) => {
-            if (error) {
-                throw error;
+            if (error){
+                res.status(500).json(error);
+                return;
             }
             Object.keys(result).forEach((key) => {
                 let item = result[key];
