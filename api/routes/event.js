@@ -36,13 +36,13 @@ router.post('/leaveEvent/:id', (req, res) => {
     })
 });
 
-router.get('/all/:id', (req, res) => {
+router.get('/allEvents/:id', (req, res) => {
     let eventList = [];
     let getAllQuery = `SELECT  Event.*, User.profileImage as profileImage FROM Event INNER JOIN User ON User.id = userId WHERE userId !=${req.params.id}`
     
     db.query(getAllQuery, (error, result) => {
         if (error) {
-            throw error;
+            res.status(500).json(error);
         }
         Object.keys(result).forEach((key) => {
             let item = result[key];
@@ -64,7 +64,7 @@ router.get('/all/:id', (req, res) => {
         });
         res.status(200).json(eventList);
     })
-})
+});
 
 router.get('/userEvents/:id', (req, res) => {
     let eventList = [];
@@ -109,7 +109,7 @@ router.post('/createEvent/:id', (req, res) => {
     let getAllQuery = `CALL create_event('${eventName}','${sport}',${lat},${long},${nrParticipants},${userId},'${dateStart}','${dateFinish}')`;
     db.query(getAllQuery, (error, result) => {
         if (error) {
-            throw error;
+            res.status(200).json(error);
         }
         Object.keys(result).forEach((key) => {
             let item = result[key];
@@ -149,7 +149,7 @@ router.post('/search', (req, res) => {
             }
             db.query(getAllQuery, (error, result) => {
                 if (error) {
-                    throw error;
+                    res.status(500).json(error);
                 }
                 Object.keys(result).forEach((key) => {
                     let item = result[key];

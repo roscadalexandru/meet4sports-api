@@ -30,6 +30,7 @@ router.post('/signUp', (req, res) => {
         db.query(queryAccounts, (error, result) => {
             if (error) {
                 res.sendStatus(500);
+                return;
             }
             console.log(result);
             res.json({
@@ -52,8 +53,10 @@ router.post('/login', (req, res) => {
     if (email && password) {
         let queryCheck = `CALL check_email('${email}')`;
         db.query(queryCheck, (error, result) => {
-            if (error)
-                throw error;
+            if (error) {
+                res.status(500).json(error);
+                return;
+            }
             user = result[0][0];
             if (email === user.email) {
                 bcrypt.compare(password, user.passwordHash, function (err, isMatching) {
