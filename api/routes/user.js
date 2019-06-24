@@ -39,7 +39,7 @@ router.post('/signUp', (req, res) => {
     });
 });
 
-router.get('/',(req,res)=>{
+router.get('/', (req, res) => {
     res.status(200).send('Hello!');
 });
 
@@ -81,6 +81,8 @@ router.post('/login', (req, res) => {
                                 state: user.state,
                                 country: user.country,
                                 profileImage: user.profileImage,
+                                coverImage: user.coverImage,
+
                                 created_date: user.created_date
                             }
                         });
@@ -109,23 +111,34 @@ router.post('/login', (req, res) => {
 
 router.post('/updateUser/:id', middleware.checkToken, (req, res) => {
     let city = req.body.city;
-    let query = `UPDATE Users SET City = '${city}' WHERE Id = ${req.params.id}`
+    let user;
+    let query = `UPDATE User SET City = '${city}' WHERE Id = ${req.params.id}`
     db.query(query, async (error, result) => {
         if (error)
             throw error;
+        console.log(result);
     });
-    let sql = db.query(`SELECT * FROM Users WHERE Id = ${req.params.id}`, (error, result) => {
+    let sql = db.query(`SELECT * FROM User WHERE Id = ${req.params.id}`, (error, result) => {
         if (error)
             throw error;
 
+        user = result[0];
         res.status(201).json({
-            id: "test",
-            fullName: result[0].FullName,
-            email: result[0].Email,
-            city: result[0].City,
-            state: result[0].State,
-            country: result[0].Country,
-            image: result[0].Image
+            success: true,
+            message: `Update successful!`,
+            exp: 'Expires in 24h',
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                birthday: user.birthday,
+                city: user.city,
+                state: user.state,
+                country: user.country,
+                profileImage: user.profileImage,
+                coverImage: user.coverImage,
+                created_date: user.created_date
+            }
         });
 
     });
@@ -137,11 +150,24 @@ router.use(express.static('public'));
 router.post("/updateProfilePhoto/:id", function (req, res) {
     let userId = req.params.id;
     let name = req.body.name;
+    let userDirectory = req.body.user;
     let img = req.body.image;
-    let url = `${req.protocol}://${req.hostname}:${3000}/user/images/${name}`;
+    let url = `${req.protocol}://${req.hostname}:${3000}/user/${userDirectory}/images/profile/${name}`;
+    console.log('Update profile started');
 
     let realFile = Buffer.from(img, "base64");
-    fs.writeFile(`./public/images/${name}`, realFile, function (err) {
+
+    if (!fs.existsSync(`./public/${userDirectory}`)) {
+        fs.mkdirSync(`./public/${userDirectory}`);
+        if (!fs.existsSync(`./public/${userDirectory}/images`)) {
+            fs.mkdirSync(`./public/${userDirectory}/images`);
+            if (!fs.existsSync(`./public/${userDirectory}/images/profile`)) {
+                fs.mkdirSync(`./public/${userDirectory}/images/profile`);
+            }
+        }
+    }
+
+    fs.writeFile(`./public/${userDirectory}/images/profile/${name}`, realFile, function (err) {
         if (err)
             console.log(err);
     });
@@ -150,6 +176,43 @@ router.post("/updateProfilePhoto/:id", function (req, res) {
     db.query(query, (error, result) => {
         if (error)
             throw error;
+        console.log(url);
+        res.status(200).json({
+            message: 'Successfuly updated',
+            photoUrl: url
+        });
+    });
+});
+
+router.post("/updateCoverPhoto/:id", function (req, res) {
+    let userId = req.params.id;
+    let name = req.body.name;
+    let userDirectory = req.body.user;
+    let img = req.body.image;
+    let url = `${req.protocol}://${req.hostname}:${3000}/user/${userDirectory}/images/cover/${name}`;
+
+    let realFile = Buffer.from(img, "base64");
+
+    if (!fs.existsSync(`./public/${userDirectory}`)) {
+        fs.mkdirSync(`./public/${userDirectory}`);
+        if (!fs.existsSync(`./public/${userDirectory}/images`)) {
+            fs.mkdirSync(`./public/${userDirectory}/images`);
+            if (!fs.existsSync(`./public/${userDirectory}/images/cover`)) {
+                fs.mkdirSync(`./public/${userDirectory}/images/cover`);
+            }
+        }
+    }
+
+    fs.writeFile(`./public/${userDirectory}/images/cover/${name}`, realFile, function (err) {
+        if (err)
+            console.log(err);
+    });
+
+    let query = `CALL update_cover_photo(${userId},'${url}')`;
+    db.query(query, (error, result) => {
+        if (error)
+            throw error;
+        console.log(url);
         res.status(200).json({
             message: 'Successfuly updated',
             photoUrl: url
@@ -158,19 +221,27 @@ router.post("/updateProfilePhoto/:id", function (req, res) {
 });
 
 router.get('/getUser/:id', middleware.checkToken, (req, res) => {
-    let query = `SELECT * FROM Users`
+    let query = `SELECT * FROM User`;
+    let user;
     db.query(query, async (error, result) => {
         if (error)
             throw error;
-        console.log(result);
-        res.status(201).json({
-            id: result[0].Id,
-            fullName: result[0].FullName,
-            email: result[0].Email,
-            city: result[0].City,
-            state: result[0].State,
-            country: result[0].Country,
-            image: result[0].Image
+        user = result[0]
+        res.status(200).json({
+            success: true,
+            exp: 'Expires in 24h',
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                birthday: user.birthday,
+                city: user.city,
+                state: user.state,
+                country: user.country,
+                profileImage: user.profileImage,
+                coverImage: user.coverImage,
+                created_date: user.created_date
+            }
         });
     });
 
