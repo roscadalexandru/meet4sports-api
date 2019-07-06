@@ -171,8 +171,8 @@ router.post("/updateProfilePhoto/:id", middleware.checkToken ,function (req, res
     }
 
     fs.writeFile(`./public/${userDirectory}/images/profile/${name}`, realFile, function (err) {
-        if (error){
-            res.status(500).json(error);
+        if (err){
+            res.status(500).json(err);
             return;
         }
     });
@@ -211,15 +211,17 @@ router.post("/updateCoverPhoto/:id", middleware.checkToken ,function (req, res) 
     }
 
     fs.writeFile(`./public/${userDirectory}/images/cover/${name}`, realFile, function (err) {
-        if (error){
-            res.status(500).json(error);
+        if (err){
+            res.status(500).json(err);
             return;
         }
     });
 
+console.log('aici 1');
     let query = `CALL update_cover_photo(${userId},'${url}')`;
     db.query(query, (error, result) => {
         if (error){
+            console.log('aici 2');
             res.status(500).json(error);
             return;
         }
