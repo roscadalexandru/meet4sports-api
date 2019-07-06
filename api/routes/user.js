@@ -40,10 +40,6 @@ router.post('/signUp', (req, res) => {
     });
 });
 
-router.get('/', (req, res) => {
-    res.status(200).send('Hello!');
-});
-
 router.post('/login', (req, res) => {
     let email = req.body.email;
     let password = req.body.password;
@@ -154,7 +150,7 @@ router.post('/updateUser/:id', middleware.checkToken, (req, res) => {
 
 router.use(express.static('public'));
 
-router.post("/updateProfilePhoto/:id", function (req, res) {
+router.post("/updateProfilePhoto/:id", middleware.checkToken ,function (req, res) {
     let userId = req.params.id;
     let name = req.body.name;
     let userDirectory = req.body.user;
@@ -195,7 +191,7 @@ router.post("/updateProfilePhoto/:id", function (req, res) {
     });
 });
 
-router.post("/updateCoverPhoto/:id", function (req, res) {
+router.post("/updateCoverPhoto/:id", middleware.checkToken ,function (req, res) {
     let userId = req.params.id;
     let name = req.body.name;
     let userDirectory = req.body.user;
@@ -236,7 +232,7 @@ router.post("/updateCoverPhoto/:id", function (req, res) {
 });
 
 router.get('/getUser/:id', middleware.checkToken, (req, res) => {
-    let query = `SELECT * FROM User`;
+    let query = `SELECT * FROM User WHERE User.id=${req.params.id}`;
     let user;
     db.query(query, async (error, result) => {
         if (error){

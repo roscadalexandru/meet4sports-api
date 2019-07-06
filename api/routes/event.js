@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const router = express.Router();
+let middleware = require('./../../middleware');
 
 
 router.use(bodyParser.json({ limit: '50mb', extended: true }));
@@ -14,34 +15,95 @@ const db = mysql.createConnection({
     database: 'meet4sports'
 });
 
-router.post('/joinEvent/:id', (req, res) => {
+router.post('/joinEvent/:id', middleware.checkToken, (req, res) => {
     let query = `CALL join_event(${req.params.id},${req.body.userId})`;
     db.query(query, (error, result) => {
         if (error) {
             res.status(500).json(error);
             return;
         }
-        res.status(200).json({success:true,message:'You have joined the event'});
+        res.status(200).json({ success: true, message: 'You have joined the event' });
     })
 });
 
-router.post('/leaveEvent/:id', (req, res) => {
+router.post('/leaveEvent/:id', middleware.checkToken, (req, res) => {
     let query = `CALL leave_Event(${req.params.id},${req.body.userId})`;
     db.query(query, (error, result) => {
-        if (error){
+        if (error) {
             res.status(500).json(error);
             return;
         }
-        res.status(200).json({success:true,message:'You have left the event'});
+        res.status(200).json({ success: true, message: 'You have left the event' });
     })
 });
 
-router.get('/allEvents/:id', (req, res) => {
+router.get('/allEvents/:id', middleware.checkToken, (req, res) => {
     let eventList = [];
     let getAllQuery = `SELECT  Event.*, User.profileImage as profileImage FROM Event INNER JOIN User ON User.id = userId WHERE userId !=${req.params.id}`
-    
     db.query(getAllQuery, (error, result) => {
-        if (error){
+        if (error) {
+            res.status(500).json(error);
+            return;
+        }
+        Object.keys(result).forEach((key) => {
+            let item = result[key];
+            event = {
+                eventId: item.id,
+                eventName: item.eventName,
+                sport: item.sport,
+                place: {
+                    lat: item.lat,
+                    long: item.long
+                },
+                numberParticipants: item.numberParticipants,
+                userId: item.userId,
+                dateStart: item.dateStart,
+                dateFinish: item.dateFinish,
+                profileImage: item.profileImage
+            };
+            eventList.push(event);
+
+        });
+        res.status(200).json(eventList);
+    });
+});
+
+router.get('/getParticipants/:id', middleware.checkToken, (req, res) => {
+    let participants = [];
+    let user;
+    let getAllQuery = `SELECT * FROM User INNER JOIN JoinedEvents ON User.id = JoinedEvents.userId WHERE JoinedEvents.eventId = ${req.params.id}`;
+    db.query(getAllQuery, (error, result) => {
+        if (error) {
+            res.status(500).json(error);
+            return;
+        }
+        Object.keys(result).forEach((key) => {
+            let item = result[key];
+            console.log(result[key]);
+            user = {
+                id: item.userId,
+                name: item.name,
+                email: item.email,
+                birthday: item.birthday,
+                city: item.city,
+                state: item.state,
+                country: item.country,
+                profileImage: item.profileImage,
+                coverImage: item.coverImage,
+                created_date: item.created_date
+            };
+            participants.push(user);
+        });
+        res.status(200).json(participants);
+    })
+});
+
+router.get('/allEvents/:id', middleware.checkToken, (req, res) => {
+    let eventList = [];
+    let getAllQuery = `SELECT  Event.*, User.profileImage as profileImage FROM Event INNER JOIN User ON User.id = userId WHERE userId !=${req.params.id}`
+
+    db.query(getAllQuery, (error, result) => {
+        if (error) {
             res.status(500).json(error);
             return;
         }
@@ -67,12 +129,12 @@ router.get('/allEvents/:id', (req, res) => {
     })
 });
 
-router.get('/userEvents/:id', (req, res) => {
+router.get('/userEvents/:id', middleware.checkToken, (req, res) => {
     let eventList = [];
     let getAllQuery = `SELECT  Event.*, User.profileImage as profileImage FROM Event INNER JOIN User ON User.id = userId WHERE Event.userId = ${req.params.id};
     `
     db.query(getAllQuery, (error, result) => {
-        if (error){
+        if (error) {
             res.status(500).json(error);
             return;
         }
@@ -98,7 +160,7 @@ router.get('/userEvents/:id', (req, res) => {
     })
 });
 
-router.post('/createEvent/:id', (req, res) => {
+router.post('/createEvent/:id', middleware.checkToken, (req, res) => {
     let eventName = req.body.eventName;
     let sport = req.body.sport;
     let lat = req.body.lat;
@@ -110,7 +172,7 @@ router.post('/createEvent/:id', (req, res) => {
     let event;
     let getAllQuery = `CALL create_event('${eventName}','${sport}',${lat},${long},${nrParticipants},${userId},'${dateStart}','${dateFinish}')`;
     db.query(getAllQuery, (error, result) => {
-        if (error){
+        if (error) {
             res.status(500).json(error);
             return;
         }
@@ -135,7 +197,7 @@ router.post('/createEvent/:id', (req, res) => {
     })
 });
 
-router.post('/search', (req, res) => {
+router.post('/search', middleware.checkToken, (req, res) => {
     let eventName = req.body.eventName;
     let sports = req.body.sport;
     let eventList = [];
@@ -151,7 +213,7 @@ router.post('/search', (req, res) => {
          `;
             }
             db.query(getAllQuery, (error, result) => {
-                if (error){
+                if (error) {
                     res.status(500).json(error);
                     return;
                 }
@@ -181,7 +243,7 @@ router.post('/search', (req, res) => {
     } else {
         getAllQuery = `SELECT  Event.*, User.profileImage as profileImage FROM Event INNER JOIN User ON User.id = userId WHERE Event.eventName LIKE '%${eventName}%'`;
         db.query(getAllQuery, (error, result) => {
-            if (error){
+            if (error) {
                 res.status(500).json(error);
                 return;
             }
